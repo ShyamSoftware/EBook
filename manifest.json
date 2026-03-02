@@ -1,0 +1,30 @@
+{
+  "name": "EBook - by Shyam Software",
+  "short_name": "EBook",
+  "description": "Simple credit and debit account management app by Shyam Software",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#5B6FD6",
+  "background_color": "#FFFFFF",
+  "icons": [
+    {
+      "src": "Logo-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "Logo-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": [
+    "business",
+    "finance",
+    "productivity"
+  ]
+}

@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Simple Credit-Debit Account Manager - Like OkCredit">
+    <meta name="theme-color" content="#5B6FD6">
+    <title>E-Book & Expense Manager | by Shyam Software</title>
+
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#5B6FD6">
+
+    <!-- Icons for PWA -->
+    <link rel="icon" type="image/png" sizes="192x192" href="Logo-192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="Logo-512.png">
+    <link rel="apple-touch-icon" href="Logo-192.png">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/modals.css">
+
+    <!-- i18n -->
+    <script src="js/i18n.js"></script>
+</head>
+
+<body>
+    <!-- Top Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-icons">
+                <img src="Logo-192.png" alt="Logo" style="width: 50px; height: 50px; border-radius: 4px;">
+            </div>
+            <div class="nav-brand">
+                <h1 style="display: flex; align-items: center; gap: 8px; margin: 0;">
+                    <span id="companyName" data-i18n="companyName">E-Book & Expense Manager</span>
+                </h1>
+                <p data-i18n="companySubtitle">Credit & Expense Manager</p>
+            </div>
+            <div class="nav-icons" style="display: flex; align-items: center; gap: 10px;">
+                <button id="settingsBtn" class="icon-btn" title="Settings">⚙️</button>
+            </div>
+        </div>
+    </nav>
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Dashboard View - People List (Main View) -->
+        <section id="dashboard" class="view active">
+            <!-- Overall Balance -->
+            <div class="balance-section">
+                <div class="balance-card credit">
+                    <div class="balance-label" data-i18n="moneyDueToMe">Money Due To Me</div>
+                    <div class="balance-value" id="totalCredit">₹ 0</div>
+                    <div class="balance-count" id="creditCount">0 people</div>
+                </div>
+                <div class="balance-card debit">
+                    <div class="balance-label" data-i18n="moneyIOwe">Money I Owe</div>
+                    <div class="balance-value" id="totalDebit">₹ 0</div>
+                    <div class="balance-count" id="debitCount">0 people</div>
+                </div>
+            </div>
+
+            <!-- Quick Add Person -->
+            <div class="action-section">
+                <button class="btn btn-lg btn-primary" id="addPersonBtn" data-i18n="addPersonBtn">➕ Add Person</button>
+                <button class="btn btn-lg btn-secondary" id="syncContactsBtn" title="Import from phone contacts"
+                    data-i18n="syncContactsBtn">📱 Sync
+                    Contacts</button>
+            </div>
+
+            <!-- Backup Info -->
+            <div class="backup-info" id="backupInfo" style="display: none;">
+                <!-- Replaced by JS, but keeping span for styling -->
+                <span id="lastBackupDisplayContainer">✅ Last backup: <span id="lastBackupTime">just now</span></span>
+            </div>
+
+            <!-- Search & People List (Main Focus) -->
+            <div class="section">
+                <div class="search-bar">
+                    <input type="text" id="searchPeople" placeholder="Search person..." data-i18n="searchPlaceholder">
+                    <button id="searchBtn" class="btn btn-primary"
+                        style="margin-top: 0.5rem; width: 100%; display: none;" data-i18n="searchBtn">🔍 Search</button>
+                </div>
+                <div class="list-group" id="peopleList">
+                    <p class="empty-state">No people added yet. Add one to get started!</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Site Footer -->
+    <footer class="site-footer">
+        <div class="footer-container">
+            <div class="footer-glass-card">
+                <div class="footer-content">
+                    <div class="footer-brand">
+                        <span class="footer-powered-by" data-i18n="poweredBy">Powered by</span>
+                        <a href="https://shyamsoftware.com" target="_blank" rel="noopener" class="footer-company">
+                            Shyam Software
+                        </a>
+                    </div>
+                </div>
+                <div class="footer-decorative-blob"></div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Modals -->
+    <!-- Person Transaction View Modal (WhatsApp Style) -->
+    <div id="personTransactionModal" class="modal">
+        <div class="modal-content chat-modal">
+            <!-- Header with person info -->
+            <div class="modal-header person-header">
+                <div class="person-header-row">
+                    <div class="person-header-info">
+                        <h2 id="personTransactionName" class="person-name">Person Name</h2>
+                        <div class="balance-badge" id="personTransactionBalance">₹ 0</div>
+                    </div>
+
+                    <div class="header-controls-group">
+                        <div class="header-sort-box">
+                            <select id="sortPropertySelect">
+                                <option value="date" data-i18n="sortDate">Date</option>
+                                <option value="amount" data-i18n="sortAmount">Amount</option>
+                                <option value="category" data-i18n="sortCategory">Category</option>
+                                <option value="status" data-i18n="sortStatus">Status</option>
+                            </select>
+                        </div>
+                        <button id="sortOrderBtn" title="Toggle Sort Order">🔽</button>
+                    </div>
+                    <button class="modal-close" style="z-index: 20;">&times;</button>
+                </div>
+            </div>
+
+            <!-- Chat/Transaction Area -->
+            <div class="chat-area" id="transactionChatArea">
+                <p class="empty-state">No transactions yet</p>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="chat-actions">
+                <button type="button" class="btn btn-credit" id="addCreditPersonBtn" data-i18n="addCreditBtn">➕
+                    Credit</button>
+                <button type="button" class="btn btn-debit" id="addDebitPersonBtn" data-i18n="addDebitBtn">➖
+                    Debit</button>
+                <button type="button" class="btn btn-secondary" id="shareWhatsAppBtn" title="Share to WhatsApp"
+                    data-i18n="shareWhatsAppBtn">
+                    💬 Share Ledger
+                </button>
+                <button type="button" class="btn btn-secondary" id="editPersonBtn" title="Edit Person"
+                    data-i18n="editPersonBtn">✏️ Edit</button>
+                <button type="button" class="btn btn-danger" id="clearAllTransactionsBtn" title="Clear All Transactions"
+                    data-i18n="clearAllBtn">🧹 Clear All</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Person Modal -->
+    <div id="personModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="personModalTitle" data-i18n="addPersonTitle">Add Person</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <form id="personForm" class="form">
+                <input type="hidden" id="personId">
+
+                <div class="form-group">
+                    <label for="personName" data-i18n="personNameLabel">Person Name *</label>
+                    <input type="text" id="personName" required placeholder="Name or Business"
+                        data-i18n="personNamePlaceholder">
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="personPhone" data-i18n="personPhoneLabel">Phone Number</label>
+                        <input type="tel" id="personPhone" placeholder="Mobile number"
+                            data-i18n="personPhonePlaceholder">
+                    </div>
+                    <div class="form-group">
+                        <label for="personEmail" data-i18n="personEmailLabel">Email</label>
+                        <input type="email" id="personEmail">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="personAddress" data-i18n="personAddressLabel">Address</label>
+                    <textarea id="personAddress" rows="2" placeholder="Address or location"
+                        data-i18n="personAddressPlaceholder"></textarea>
+                </div>
+
+                <div class="form-actions" style="justify-content: space-between;">
+                    <button type="button" class="btn btn-danger" id="deletePersonModalBtn" style="display: none;"
+                        data-i18n="deletePersonBtn">Delete Person</button>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <button type="button" class="btn btn-secondary modal-close-btn"
+                            data-i18n="cancelBtn">Cancel</button>
+                        <button type="submit" class="btn btn-primary" data-i18n="savePersonBtn">Save Person</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Transaction Modal -->
+    <div id="transactionModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header transaction-header">
+                <div class="transaction-header-content">
+                    <h3 id="transactionModalTitle" class="transaction-title" data-i18n="addTransactionTitle">Add
+                        Transaction</h3>
+                    <div class="transaction-type-badge" id="transactionTypeBadge"></div>
+                </div>
+                <button class="modal-close">&times;</button>
+            </div>
+            <form id="transactionForm" class="form transaction-form">
+                <input type="hidden" id="transactionId">
+                <input type="hidden" id="transactionType">
+                <input type="hidden" id="transactionPersonId">
+
+                <!-- Person Selection - Show only in main dashboard -->
+                <div class="form-group form-group-highlight" id="personSelectionGroup">
+                    <label for="transactionPerson" data-i18n="selectPersonLabel">Person *</label>
+                    <select id="transactionPerson">
+                        <option value="" data-i18n="selectPersonOption">-- Select Person --</option>
+                    </select>
+                    <button type="button" class="btn btn-sm btn-secondary" id="quickAddPersonBtn"
+                        style="margin-top: 0.5rem;" data-i18n="addNewPersonBtn">+ Add New Person</button>
+                </div>
+
+                <!-- Person Display - Show only when from person view -->
+                <div class="form-group form-group-highlight" id="personDisplayGroup" style="display: none;">
+                    <div class="person-display" id="personDisplayName"
+                        style="border-radius: 6px; font-weight: 600; color: var(--primary-dark);">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group" style="padding: 0.5rem;">
+                        <label for="transactionDate" data-i18n="dateLabel">Date *</label>
+                        <input type="date" id="transactionDate" required class="date-input">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group form-group-highlight">
+                        <label for="transactionAmount" data-i18n="amountLabel">Amount *</label>
+                        <input type="number" id="transactionAmount" required placeholder="0.00" min="0" step="0.01"
+                            class="amount-input">
+                    </div>
+                </div>
+
+
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="transactionCategory" data-i18n="categoryLabel">Category</label>
+                        <select id="transactionCategory">
+                            <option value="general" data-i18n="categoryGeneral">General</option>
+                            <option value="retail" data-i18n="categoryRetail">Retail Sales</option>
+                            <option value="service" data-i18n="categoryService">Service</option>
+                            <option value="payment" data-i18n="categoryPayment">Payment</option>
+                            <option value="loan" data-i18n="categoryLoan">Loan</option>
+                            <option value="expense" data-i18n="categoryExpense">Expense</option>
+                            <option value="other" data-i18n="categoryOther">Other</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="transactionStatus" data-i18n="statusLabel">Status</label>
+                        <select id="transactionStatus">
+                            <option value="open" data-i18n="statusOpen">Open</option>
+                            <option value="settled" data-i18n="statusSettled">Settled ✓</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Notes -->
+                <div class="form-group">
+                    <label for="transactionNotes" data-i18n="notesLabel">Notes (optional)</label>
+                    <textarea id="transactionNotes" rows="2" placeholder="Add any description..."
+                        data-i18n="notesPlaceholder"></textarea>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-lg" id="saveTransactionBtn" data-i18n="saveBtn">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settingsModal" class="modal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h3 data-i18n="settingsHeader">Settings ⚙️</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+
+            <!-- Profile Settings -->
+            <div class="settings-section">
+                <h4 data-i18n="yourProfileHeader">👤 Your Profile</h4>
+                <form id="settingsForm" class="form">
+                    <div class="form-group">
+                        <label for="yourName" data-i18n="businessNameLabel">Business/Name</label>
+                        <input type="text" id="yourName" placeholder="Your name or business"
+                            data-i18n="businessNamePlaceholder">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="yourPhone" data-i18n="yourPhoneLabel">Your Phone</label>
+                        <input type="tel" id="yourPhone" placeholder="Your contact number"
+                            data-i18n="yourPhonePlaceholder">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="yourEmail" data-i18n="yourEmailLabel">Your Email</label>
+                        <input type="email" id="yourEmail" placeholder="Your email" data-i18n="yourEmailPlaceholder">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="languageSelector" data-i18n="selectLanguageLabel">Language</label>
+                        <select id="languageSelector" class="lang-select">
+                            <option value="en">English</option>
+                            <option value="gu">ગુજરાતી</option>
+                            <option value="hi">हिंदी</option>
+                        </select>
+                    </div>
+
+                    <div class="form-actions" style="gap: 0.5rem; margin-bottom: 2rem;">
+                        <button type="reset" class="btn btn-secondary" data-i18n="resetBtn">Reset</button>
+                        <button type="submit" class="btn btn-primary" data-i18n="saveProfileBtn">Save Profile</button>
+                    </div>
+                </form>
+
+
+            </div>
+
+            <!-- Backup & Data Management -->
+            <div class="settings-section">
+                <h4 data-i18n="backupSectionHeader">💾 Backup & Data Management</h4>
+                <p style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 1rem;"
+                    data-i18n="backupSectionHint">
+                    💡 Backups are automatically created. Restore from any backup using the date below.
+                </p>
+
+                <!-- Backup Controls -->
+                <div class="backup-buttons">
+                    <button type="button" class="btn btn-primary" id="googleDriveBackupBtn"
+                        style="grid-column: 1 / -1; margin-bottom: 0.5rem;" data-i18n="googleDriveBtn">
+                        ☁️ Share / Save to Google Drive
+                    </button>
+                    <button type="button" class="btn btn-secondary" id="manualBackupBtn" data-i18n="manualBackupBtn">
+                        💾 Create Local Backup
+                    </button>
+                    <button type="button" class="btn btn-secondary" id="exportJsonBtn2" data-i18n="exportJsonBtn">
+                        📥 Export as JSON
+                    </button>
+                    <button type="button" class="btn btn-secondary" id="exportCsvBtn2" data-i18n="exportCsvBtn">
+                        📊 Export as CSV
+                    </button>
+                </div>
+
+                <!-- Backup Status -->
+                <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 1rem; margin-bottom: 1.5rem;"
+                    id="backupStatus">
+                    <span data-i18n="backupStatusPrefix">✅ Last backup: </span><span id="lastBackupDisplay">just
+                        now</span>
+                </p>
+
+                <!-- Backup History for Restoration -->
+                <div style="margin-top: 1.5rem; border-top: 1px solid var(--border); padding-top: 1rem;">
+                    <h5 style="font-size: 0.95rem; margin-bottom: 1rem;" data-i18n="backupHistoryHeader">📋 Backup
+                        History (Date-Wise)</h5>
+                    <div id="backupList" class="backup-history-list">
+                        <p class="empty-state" data-i18n="noBackupsYet">No backups yet. Create one now!</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Danger Zone -->
+            <div class="settings-section danger-section">
+                <h4 data-i18n="dangerZoneHeader">🗑️ Danger Zone</h4>
+                <p style="font-size: 0.875rem; color: #EF4444; margin-bottom: 1rem;" data-i18n="dangerZoneHint">
+                    ⚠️ These actions cannot be undone!
+                </p>
+                <button type="button" class="btn btn-danger" id="resetDataBtn2" data-i18n="deleteDataBtn">
+                    Delete ALL Data Permanently
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast"></div>
+
+    <!-- Scripts -->
+    <script src="js/db.js?v=1.1"></script>
+    <script src="js/ui.js?v=1.1"></script>
+    <script src="js/app.js?v=1.1"></script>
+
+    <script>
+        // Register Service Worker
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('service-worker.js')
+                .then(reg => console.log('Service Worker registered'))
+                .catch(err => console.log('Service Worker registration failed:', err));
+        }
+    </script>
+</body>
+
+</html>
